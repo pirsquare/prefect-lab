@@ -6,12 +6,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: prefect-worker-dev
+    # Explicit worker type prevents "no worker type was provided" when the pool is missing.
+    command: ["prefect", "worker", "start", "--pool", "default", "--type", "process"]
     environment:
       # API URL and credentials for connecting to Prefect Server or Cloud
       # Default: self-hosted server in Docker
       # Override these in .env or docker-compose.override.yml
-      - PREFECT_API_URL=${PREFECT_API_URL}
-      - PREFECT_API_KEY=${PREFECT_API_KEY}
+      # IMPORTANT: inside Docker, do NOT use localhost/127.0.0.1 for the server.
+      # This default keeps the setup working even if PREFECT_API_URL is missing.
+      - PREFECT_API_URL=${PREFECT_API_URL:-http://prefect-server:4200/api}
+      - PREFECT_API_KEY=${PREFECT_API_KEY:-}
       
       # Logging
       - PREFECT_LOGGING_LEVEL=INFO
@@ -28,7 +32,8 @@ services:
       timeout: 10s
       retries: 3
     depends_on:
-      - prefect-server
+      prefect-server:
+        condition: service_healthy
 
   # Prefect Server (self-hosted orchestration - enabled by default)
   # Provides local UI at http://localhost:4200
@@ -36,7 +41,8 @@ services:
   prefect-server:
     image: prefecthq/prefect:3-latest
     container_name: prefect-server
-    command: prefect server start
+    # Bind to all interfaces so other containers can reach the API
+    command: prefect server start --host 0.0.0.0 --port 4200
     environment:
       - PREFECT_HOME=/root/.prefect
     ports:
@@ -49,7 +55,8 @@ services:
       - prefect
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "prefect", "version"]
+      # Check the API health endpoint instead of just the CLI
+      test: ["CMD", "python", "-c", "import httpx; print(httpx.get('http://localhost:4200/api/health').status_code)"]
       interval: 30s
       timeout: 10s
       retries: 3

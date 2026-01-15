@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Prefect Worker - runs in Docker locally
   # Connects to self-hosted Prefect Server (or Prefect Cloud) to pull scheduled work

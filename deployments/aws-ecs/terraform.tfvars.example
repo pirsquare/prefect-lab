@@ -1,0 +1,41 @@
+# ============================================================================
+# AWS ECS Terraform Variables
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+
+aws_region = "ap-southeast-1"  # Singapore
+
+ecr_repo_name = "prefect-lab"
+
+cluster_name = "prefect-cluster"
+
+task_family = "prefect-worker"
+
+# Prefect Configuration
+prefect_api_url     = "https://api.prefect.cloud/api"  # Or your self-hosted URL
+prefect_secret_name = "prefect/api-key"  # Existing Secrets Manager secret
+
+# Network Configuration
+subnets = [
+  "subnet-abc123",
+  "subnet-def456"
+]
+
+security_groups = [
+  "sg-abc123"
+]
+
+assign_public_ip = true
+
+# Worker Configuration
+enable_service  = true  # Set to false for one-off tasks only
+desired_count   = 1     # Number of workers
+task_cpu        = "512"
+task_memory     = "1024"
+
+# Tags
+tags = {
+  Project     = "prefect-lab"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

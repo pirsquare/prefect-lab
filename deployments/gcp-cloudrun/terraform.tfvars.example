@@ -1,0 +1,21 @@
+# ============================================================================
+# GCP Cloud Run Terraform Variables
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+
+gcp_project = "my-project-id"
+gcp_region  = "asia-southeast1"  # Singapore
+
+ar_location  = "asia-southeast1"  # Singapore
+ar_repo_name = "prefect-lab"
+
+# Prefect Configuration
+prefect_api_url     = "https://api.prefect.cloud/api"  # Or your self-hosted URL
+prefect_secret_name = "prefect-api-key"  # Existing Secret Manager secret
+
+# Cloud Run Configuration
+cpu_limit      = "1"
+memory_limit   = "2Gi"
+min_instances  = 1
+max_instances  = 2
+image_tag      = "latest"

@@ -5,10 +5,34 @@ A minimal, copy-pasteable Prefect v3 setup with local Docker development and mul
 **Key Features:**
 - ✅ Self-hosted Prefect Server by default (local, no cloud account required)
 - ✅ Optional Prefect Cloud integration (for remote orchestration)
+- ✅ **Secure secret management** (no API keys in Terraform files or Git)
 - ✅ Example flow with schedules, retries, and structured logging
-- ✅ Ready-to-use cloud deployment scripts (AWS, GCP, Azure)
+- ✅ Multi-cloud deployment with Terraform (AWS, GCP, Azure)
 - ✅ Windows-friendly (Docker Desktop + PowerShell/Bash support)
 - ✅ No Kubernetes required
+
+---
+
+## Security Best Practices
+
+**🔒 This project follows security-first principles:**
+
+1. **No API Keys in Code or Config Files**
+   - API keys are NEVER stored in `terraform.tfvars` or committed to Git
+   - All cloud deployments use native secret management services
+   
+2. **Cloud-Native Secret Managers**
+   - **AWS**: Secrets Manager (referenced, not created by Terraform)
+   - **GCP**: Secret Manager (created manually, referenced by Terraform)
+   - **Azure**: Container App secrets (set via CLI after deployment)
+   
+3. **Local Development**
+   - Self-hosted server by default (no API keys needed)
+   - `.env` file excluded from Git via `.gitignore`
+   
+4. **Terraform State Security**
+   - Always use remote state (S3, GCS, Azure Blob) for production
+   - Never commit `terraform.tfstate` files (excluded in `.gitignore`)
 
 ---
 
@@ -132,11 +156,20 @@ prefect-lab/
 ├── deployments/
 │   ├── prefect.yaml              # Deployment configurations (all targets)
 │   ├── aws-ecs/
-│   │   └── deploy.sh             # AWS ECS deployment script
+│   │   ├── main.tf               # Terraform: AWS ECS infrastructure
+│   │   ├── variables.tf          # Terraform: variable definitions
+│   │   ├── outputs.tf            # Terraform: outputs
+│   │   └── terraform.tfvars.example  # Example variables
 │   ├── gcp-cloudrun/
-│   │   └── deploy.sh             # GCP Cloud Run deployment script
+│   │   ├── main.tf               # Terraform: GCP Cloud Run infrastructure
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars.example
 │   └── azure-containerapps/
-│       └── deploy.sh             # Azure Container Apps deployment script
+│       ├── main.tf               # Terraform: Azure Container Apps infrastructure
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── terraform.tfvars.example
 ├── Dockerfile                    # Container image for flows & workers
 ├── docker-compose.yml            # Local dev environment
 ├── requirements.txt              # Python dependencies
@@ -148,63 +181,89 @@ prefect-lab/
 
 ## Deploy to AWS ECS (Fargate)
 
+All cloud deployments now use **Terraform** for infrastructure-as-code management.
+
 ### Prerequisites
 
+- [Terraform](https://www.terraform.io/downloads) >= 1.0 installed
 - AWS account with ECR, ECS, and Secrets Manager access
 - AWS CLI configured locally (`aws configure`)
 - Prefect Cloud account (with API key) OR use self-hosted server for cloud deployments
 
 ### Steps
 
-1. **Update `.env` with AWS details:**
-
-```env
-AWS_REGION=us-east-1
-AWS_ACCOUNT_ID=123456789012
-AWS_ECR_REPO=prefect-lab
-AWS_ECS_CLUSTER=prefect-cluster
-AWS_ECS_TASK_FAMILY=prefect-worker
-AWS_SUBNETS=subnet-abc123,subnet-def456
-AWS_SECURITY_GROUPS=sg-abc123
-```
-
-2. **Run deployment script:**
+1. **Create secret in AWS Secrets Manager (BEFORE running Terraform):**
 
 ```bash
-bash deployments/aws-ecs/deploy.sh
-```
-
-The script will:
-- ✅ Login to ECR
-- ✅ Build and push Docker image
-- ✅ Register ECS task definition
-- ✅ Output instructions for next steps
-
-3. **Complete manual setup:**
-
-```bash
-# 1. Create CloudWatch log group
-aws logs create-log-group \
-  --log-group-name /ecs/prefect-worker \
-  --region us-east-1
-
-# 2. Store API key in Secrets Manager
+# Store Prefect API key securely in Secrets Manager
 aws secretsmanager create-secret \
   --name prefect/api-key \
-  --secret-string 'your-prefect-api-key' \
-  --region us-east-1
-
-# 3. Create ECS service or one-off task
-aws ecs run-task \
-  --cluster prefect-cluster \
-  --task-definition prefect-worker:1 \
-  --launch-type FARGATE \
-  --network-configuration \
-    "awsvpcConfiguration={subnets=[subnet-abc123],securityGroups=[sg-abc123],assignPublicIp=ENABLED}" \
-  --region us-east-1
+  --description "Prefect Cloud API key" \
+  --secret-string "your-prefect-cloud-api-key-here" \
+  --region ap-southeast-1
 ```
 
-4. **In Prefect Cloud:**
+2. **Navigate to AWS deployment directory:**
+
+```bash
+cd deployments/aws-ecs
+```
+
+3. **Create `terraform.tfvars` from example:**
+
+```bash
+# Windows
+Copy-Item terraform.tfvars.example terraform.tfvars
+
+# Linux/Mac
+cp terraform.tfvars.example terraform.tfvars
+```
+
+4. **Edit `terraform.tfvars` with your values:**
+
+```hcl
+aws_region = "ap-southeast-1"  # Singapore
+
+# Reference to existing secret (created in step 1)
+prefect_secret_name = "prefect/api-key"
+
+subnets = [
+  "subnet-abc123",
+  "subnet-def456"
+]
+
+security_groups = [
+  "sg-abc123"
+]
+```
+
+5. **Initialize and apply Terraform:**
+
+```bash
+# Initialize Terraform
+terraform init
+
+# Review planned changes
+terraform plan
+
+# Apply infrastructure
+terraform apply
+```
+
+5. **Build and push Docker image:**
+
+```bash
+# Get ECR login command from Terraform output
+terraform output -raw docker_login_command | Invoke-Expression  # PowerShell
+# or
+$(terraform output -raw docker_login_command)  # Bash
+
+# Build and push (commands shown in output)
+cd ../..
+terraform output -raw docker_build_push_commands | sh
+```
+
+7. **Create Prefect work pool and deploy:**
 
 ```bash
 # Create work pool for ECS
@@ -214,14 +273,23 @@ prefect work-pool create --type ecs aws-ecs-pool
 prefect deploy --deployment hello-flow-aws-ecs
 ```
 
-5. **Verify:**
+8. **Verify deployment:**
 
 ```bash
-# Check task status in AWS
-aws ecs describe-tasks \
-  --cluster prefect-cluster \
-  --tasks <TASK_ARN> \
-  --region us-east-1
+cd deployments/aws-ecs
+
+# Check ECS service status
+terraform output
+
+# View logs
+aws logs tail $(terraform output -raw cloudwatch_log_group) --follow
+```
+
+### Cleanup
+
+```bash
+cd deployments/aws-ecs
+terraform destroy
 ```
 
 ---
@@ -230,68 +298,107 @@ aws ecs describe-tasks \
 
 ### Prerequisites
 
+- [Terraform](https://www.terraform.io/downloads) >= 1.0 installed
 - Google Cloud project created
-- `gcloud` CLI installed and authenticated (`gcloud auth login`)
-- Artifact Registry API enabled
+- `gcloud` CLI installed and authenticated (`gcloud auth login`, `gcloud auth application-default login`)
 - Prefect Cloud account OR use self-hosted server
 
 ### Steps
 
-1. **Update `.env` with GCP details:**
-
-```env
-GCP_PROJECT=my-project-id
-GCP_REGION=us-central1
-GCP_AR_REPO=prefect-lab
-GCP_AR_LOCATION=us-central1
-```
-
-2. **Run deployment script:**
+1. **Create secret in GCP Secret Manager (BEFORE running Terraform):**
 
 ```bash
-bash deployments/gcp-cloudrun/deploy.sh
+# Enable Secret Manager API
+gcloud services enable secretmanager.googleapis.com --project=my-project-id
+
+3 Store Prefect API key securely
+echo -n "your-prefect-cloud-api-key-here" | \
+  gcloud secrets create prefect-api-key \
+    --data-file=- \
+    --replication-policy=automatic \
+    --project=my-project-id
 ```
 
-The script will:
-- ✅ Create Artifact Registry repository
-- ✅ Build and push image
-- ✅ Deploy Cloud Run service
-- ✅ Output instructions for next steps
+2. **Navigate to GCP deployment directory:**
 
-3. **Complete manual setup:**
+4. **Edit `terraform.tfvars`:**
 
-```bash
-# 1. Create Cloud Secret
-gcloud secrets create prefect-api-key \
-  --data-file=- <<< 'your-prefect-api-key' \
-  --project my-project-id
+```hcl
+gcp_project = "my-project-id"
+gcp_region  = "asia-southeast1"  # Singapore
 
-# 2. Grant Cloud Run service account secret access
-gcloud secrets add-iam-policy-binding prefect-api-key \
-  --member=serviceAccount:prefect-worker@my-project-id.iam.gserviceaccount.com \
-  --role=roles/secretmanager.secretAccessor \
-  --project my-project-id
-
-# 3. (Optional) Create service account if not exists
-gcloud iam service-accounts create prefect-worker \
-  --display-name='Prefect Worker' \
-  --project my-project-id
+# Reference to existing secret (created in step 1)
+prefect_secret_name = "prefect-api-key"
 ```
 
-4. **In Prefect Cloud:**
+5
+# Linux/Mac
+cp terraform.tfvars.example terraform.tfvars
+```
+
+3. **Edit `terraform.tfvars`:**
+
+```hcl
+gcp_project = "my-project-id"
+gcp_region  = "us-central1"
+
+prefect_api_key = "your-prefect-api-key-here"
+```
+
+4. **Initialize and apply Terraform:**
 
 ```bash
-# Create work pool for Cloud Run
+terraform init
+terraform plan
+terraform apply
+5. **Add Prefect API key as Container App secret (AFTER Terraform deployment):**
+
+```bash
+# Set API key securely via Azure CLI
+az containerapp secret set \
+  --name prefect-worker \
+  --resource-group prefect-rg \
+  --secrets prefect-api-key="your-prefect-cloud-api-key-here"
+
+# Update container to use the secret
+az containerapp update \
+  --name prefect-worker \
+  --resource-group prefect-rg \
+  --set-env-vars "PREFECT_API_KEY=secretref:prefect-api-key"
+```
+
+5. **Build and push Docker image:**
+
+```bash
+# Configure Docker authentication
+terraform output -raw docker_login_command | Invoke-Expression  # PowerShell
+# or
+$(terraform output -raw docker_login_command)  # Bash
+
+# Build and push
+cd ../..
+terraform output -raw docker_build_push_commands | sh
+```
+7. **Create Prefect work pool and deploy:**
+
+```bash
 prefect work-pool create --type cloud-run gcp-cloudrun-pool
-
-# Deploy flow
 prefect deploy --deployment hello-flow-gcp-cloudrun
 ```
 
-5. **Verify:**
+8. **Verify:**
 
 ```bash
-gcloud run services describe prefect-worker --region us-central1
+cd deployments/gcp-cloudrun
+terraform output
+gcloud run services describe prefect-worker --region asia-southeast1
+```
+
+### Cleanup
+
+```bash
+cd deployments/gcp-cloudrun
+terraform destroy
 ```
 
 ---
@@ -300,17 +407,82 @@ gcloud run services describe prefect-worker --region us-central1
 
 ### Prerequisites
 
+- 
+``[Terraform](https://www.terraform.io/downloads) >= 1.0 installed
 - Azure subscription (free account works)
 - `az` CLI installed and authenticated (`az login`)
 - Prefect Cloud account OR use self-hosted server
 
 ### Steps
 
-1. **Update `.env` with Azure details:**
+1. **Navigate to Azure deployment directory:**
 
-```env
-AZ_SUBSCRIPTION=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-AZ_RESOURCE_GROUP=prefect-rg
+```bash
+cd deployments/azure-containerapps
+```
+
+2. **Create `terraform.tfvars` from example:**
+
+```bash
+# Windows
+Copy-Item terraform.tfvars.example terraform.tfvars
+
+# Linux/Mac
+cp terraform.tfvars.example terraform.tfvars
+```
+
+3. **Edit `terraform.tfvars`:**
+
+```hcl
+subscription_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+prefect_api_key = "your-prefect-api-key-here"
+
+# Note: acr_name must be globally unique, alphanumeric only
+acr_name = "prefectacr12345"
+```
+
+4. **Initialize and apply Terraform:**
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+5. **Build and push Docker image:**
+
+```bash
+# Login to ACR
+terraform output -raw docker_login_command | Invoke-Expression  # PowerShell
+# or
+$(terraform output -raw docker_login_command)  # Bash
+
+# Build and push using ACR
+cd ../..
+az acr build --registry $(terraform output -raw acr_login_server | cut -d. -f1) --image prefect-worker:latest --file Dockerfile .
+```
+
+7. **Create Prefect work pool and deploy:**
+
+```bash
+prefect work-pool create --type azure-container-instances azure-aca-pool
+prefect deploy --deployment hello-flow-azure-aca
+```
+
+8. **Verify:**
+
+```bash
+cd deployments/azure-containerapps
+terraform output
+az containerapp show --name prefect-worker --resource-group prefect-rg
+```
+
+### Cleanup
+
+```bash
+cd deployments/azure-containerapps
+terraform destroy
 AZ_LOCATION=eastus
 AZ_ACR_NAME=prefectacr
 AZ_CONTAINERAPPS_ENV=prefect-env

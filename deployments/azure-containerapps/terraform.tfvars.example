@@ -1,0 +1,30 @@
+# ============================================================================
+# Azure Container Apps Terraform Variables
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+
+subscription_id      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+resource_group_name  = "prefect-rg"
+location             = "southeastasia"  # Singapore
+
+acr_name             = "prefectacr"  # Must be globally unique, alphanumeric only
+acr_sku              = "Basic"
+
+container_app_env_name = "prefect-env"
+
+# Prefect Configuration
+prefect_api_url = "https://api.prefect.cloud/api"  # Or your self-hosted URL
+
+# Container Configuration
+container_cpu    = 1.0
+container_memory = "2Gi"
+min_replicas     = 1
+max_replicas     = 2
+image_tag        = "latest"
+
+# Tags
+tags = {
+  Project     = "prefect-lab"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+}

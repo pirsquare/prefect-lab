@@ -89,6 +89,7 @@ pip install prefect>=3.0.0
 # NOTE: This repo's docker-compose runs a **process worker** inside a container
 # (see docker-compose.yml: `prefect worker start --type process`).
 # Therefore the local work pool should be type **process**.
+set PREFECT_API_URL=http://127.0.0.1:4200/api
 prefect work-pool create --type process default
 
 # Deploy using prefect.yaml configuration

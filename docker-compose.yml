@@ -34,7 +34,6 @@ services:
     depends_on:
       prefect-server:
         condition: service_healthy
-
   # Prefect Server (self-hosted orchestration - enabled by default)
   # Provides local UI at http://localhost:4200
   # No external cloud account needed for local development

@@ -94,16 +94,16 @@ prefect deploy
 Expected output:
 ```
 Created work pool 'default' (type: docker)
-Deployment 'hello-flow-local' deployed successfully
+Deployment 'hello_flow/local' deployed successfully
 ```
 
-This reads the deployment configuration from `deployments/prefect.yaml` and deploys all defined deployments to their respective work pools.
+This reads the deployment configuration from `deployments/prefect.yaml` and deploys all defined deployments (hello_flow/local, hello_flow/aws-ecs, hello_flow/gcp-cloudrun, hello_flow/azure-aca) to their respective work pools.
 
 ### Trigger a Flow Run
 
 ```bash
 # Via CLI
-prefect deployment run hello-flow-local
+prefect deployment run 'hello_flow/local'
 
 # Or via Prefect UI at http://localhost:4200
 ```
@@ -120,7 +120,7 @@ prefect deploy
 ### 5. View Logs & Results
 
 **In Prefect UI (http://localhost:4200):**
-- Navigate to **Deployments** → **hello-flow-local**
+- Navigate to **Deployments** → **hello_flow/local**
 - Click a run to see logs, tasks, and retry details
 
 **In Docker logs:**
@@ -519,7 +519,7 @@ The script will:
 prefect work-pool create --type azure-container-instances azure-aca-pool
 
 # Deploy flow
-prefect deploy --deployment hello-flow-azure-aca
+prefect deploy
 ```
 
 4. **Verify:**
@@ -569,10 +569,10 @@ def hello_flow(data_source: str = "api.example.com") -> str:
 
 ```bash
 # Via Prefect UI at http://localhost:4200
-# Navigate to Deployments > hello-flow-local > Run
+# Navigate to Deployments > hello_flow/local > Run
 
 # Or via CLI
-prefect deployment run hello-flow-local --param data_source="custom-api.com"
+prefect deployment run 'hello_flow/local' --param data_source="custom-api.com"
 ```
 
 ### View Flow Logs
@@ -590,7 +590,7 @@ docker-compose logs -f prefect-worker
 ```bash
 # 1. Edit flows/hello_flow.py
 # 2. Redeploy
-prefect deploy --deployment hello-flow-local
+prefect deploy
 
 # 3. Next scheduled run uses new code
 ```
@@ -615,10 +615,10 @@ prefect work-pool create --type azure-container-instances azure-pool
 
 ```bash
 # Pause (stop scheduling new runs)
-prefect deployment pause hello-flow-local
+prefect deployment pause 'hello_flow/local'
 
 # Resume
-prefect deployment resume hello-flow-local
+prefect deployment resume 'hello_flow/local'
 ```
 
 ### Stop a Running Flow
@@ -684,7 +684,7 @@ docker-compose exec prefect-server prefect version
 prefect deployment ls
 
 # If missing, redeploy
-prefect deploy --deployment hello-flow-local
+prefect deploy
 
 # Check if work pool exists
 prefect work-pool ls
@@ -707,7 +707,7 @@ docker-compose down
 docker system prune -a
 
 # Then redeploy
-prefect deploy --deployment hello-flow-local
+prefect deploy
 ```
 
 ### Cloud Deployment Errors

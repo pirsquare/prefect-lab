@@ -59,7 +59,7 @@ def store_result(processed_data: dict) -> str:
 
 # Main Flow
 @flow(
-    name="hello-flow",
+    name="hello_flow",
     description="Example ETL flow with retries and logging"
 )
 def hello_flow(data_source: str = "api.example.com") -> str:

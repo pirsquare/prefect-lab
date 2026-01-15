@@ -4,6 +4,26 @@
 # Default configuration
 version: 3
 
+# ------------------------------------------------------------------------
+# IMPORTANT (Windows + Docker)
+#
+# This project runs the Prefect worker inside a Linux container. If your
+# deployment contains a pull step like:
+#
+#   prefect.deployments.steps.set_working_directory:
+#     directory: C:\Users\...\prefect-lab
+#
+# the worker will crash because that Windows path does not exist in the
+# container.
+#
+# To prevent Prefect from auto-generating a Windows host path, we define a
+# default `pull` step that sets the working directory to the image WORKDIR.
+# ------------------------------------------------------------------------
+
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: /app
+
 # Import deployments from subdirectory
 deployments:
   # Include all deployments from deployments/prefect.yaml
@@ -46,10 +66,16 @@ deployments:
     
     entrypoint: "flows/hello_flow.py:hello_flow"
     
-    # Git source configuration
-    code:
-      repository: "https://github.com/pirsquare/prefect-lab.git"
-      branch: "main"
+    # Pull flow code at runtime in the worker environment
+    pull:
+      - prefect.deployments.steps.git_clone:
+          id: clone
+          repository: "https://github.com/pirsquare/prefect-lab.git"
+          branch: "main"
+          # Keep the directory name stable to avoid branch-suffix surprises
+          clone_directory_name: "prefect-lab"
+      - prefect.deployments.steps.set_working_directory:
+          directory: "{{ clone.directory }}"
     
     # AWS work pool (created via `prefect work-pool create ...`)
     work_pool:
@@ -76,10 +102,15 @@ deployments:
     
     entrypoint: "flows/hello_flow.py:hello_flow"
     
-    # Git source configuration
-    code:
-      repository: "https://github.com/pirsquare/prefect-lab.git"
-      branch: "main"
+    # Pull flow code at runtime in the worker environment
+    pull:
+      - prefect.deployments.steps.git_clone:
+          id: clone
+          repository: "https://github.com/pirsquare/prefect-lab.git"
+          branch: "main"
+          clone_directory_name: "prefect-lab"
+      - prefect.deployments.steps.set_working_directory:
+          directory: "{{ clone.directory }}"
     
     # GCP work pool
     work_pool:
@@ -106,10 +137,15 @@ deployments:
     
     entrypoint: "flows/hello_flow.py:hello_flow"
     
-    # Git source configuration
-    code:
-      repository: "https://github.com/pirsquare/prefect-lab.git"
-      branch: "main"
+    # Pull flow code at runtime in the worker environment
+    pull:
+      - prefect.deployments.steps.git_clone:
+          id: clone
+          repository: "https://github.com/pirsquare/prefect-lab.git"
+          branch: "main"
+          clone_directory_name: "prefect-lab"
+      - prefect.deployments.steps.set_working_directory:
+          directory: "{{ clone.directory }}"
     
     # Azure work pool
     work_pool:

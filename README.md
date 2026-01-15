@@ -85,7 +85,11 @@ In PowerShell or Bash (not in container):
 pip install prefect>=3.0.0
 
 # Create a local work pool (for development)
-prefect work-pool create --type docker default
+#
+# NOTE: This repo's docker-compose runs a **process worker** inside a container
+# (see docker-compose.yml: `prefect worker start --type process`).
+# Therefore the local work pool should be type **process**.
+prefect work-pool create --type process default
 
 # Deploy using prefect.yaml configuration
 prefect deploy
@@ -93,24 +97,24 @@ prefect deploy
 
 Expected output:
 ```
-Created work pool 'default' (type: docker)
-Deployment 'hello_flow/local' deployed successfully
+Created work pool 'default' (type: process)
+Deployment 'hello-flow/local' deployed successfully
 ```
 
-This reads the deployment configuration from `deployments/prefect.yaml` and deploys all defined deployments (hello_flow/local, hello_flow/aws-ecs, hello_flow/gcp-cloudrun, hello_flow/azure-aca) to their respective work pools.
+This reads the deployment configuration from `prefect.yaml` and deploys all defined deployments (e.g. `hello-flow/local`, `hello-flow/aws-ecs`, etc.) to their respective work pools.
 
 ### Trigger a Flow Run
 
 ```bash
 # Via CLI
-prefect deployment run 'hello_flow/local'
+prefect deployment run 'hello-flow/local'
 
 # Or via Prefect UI at http://localhost:4200
 ```
 
 ### Redeploy After Changes
 
-If you modify `flows/hello_flow.py` or `deployments/prefect.yaml`:
+If you modify `flows/hello_flow.py` or `prefect.yaml`:
 
 ```bash
 # Redeploy using updated configuration
@@ -572,7 +576,7 @@ def hello_flow(data_source: str = "api.example.com") -> str:
 # Navigate to Deployments > hello_flow/local > Run
 
 # Or via CLI
-prefect deployment run 'hello_flow/local' --param data_source="custom-api.com"
+prefect deployment run 'hello-flow/local' --param data_source="custom-api.com"
 ```
 
 ### View Flow Logs

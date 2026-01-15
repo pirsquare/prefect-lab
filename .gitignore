@@ -73,7 +73,6 @@ docker-compose.override.yml
 # Docker volumes and caches
 postgres_data/
 prefect-server-data/
-.docker/
 
 # ============================================================================
 # IDE & Editor

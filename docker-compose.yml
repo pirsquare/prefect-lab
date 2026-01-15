@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  # Prefect Worker - runs in Docker locally
+  # Connects to self-hosted Prefect Server (or Prefect Cloud) to pull scheduled work
+  prefect-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prefect-worker-dev
+    environment:
+      # API URL and credentials for connecting to Prefect Server or Cloud
+      # Default: self-hosted server in Docker
+      # Override these in .env or docker-compose.override.yml
+      - PREFECT_API_URL=${PREFECT_API_URL}
+      - PREFECT_API_KEY=${PREFECT_API_KEY}
+      
+      # Logging
+      - PREFECT_LOGGING_LEVEL=INFO
+    volumes:
+      # Mount local flows for development
+      - ./flows:/app/flows
+      # (Docker socket mounting for Windows requires special config; see docker-compose.override.yml.example)
+    networks:
+      - prefect
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "prefect", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - prefect-server
+
+  # Prefect Server (self-hosted orchestration - enabled by default)
+  # Provides local UI at http://localhost:4200
+  # No external cloud account needed for local development
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: prefect-server
+    command: prefect server start
+    environment:
+      - PREFECT_HOME=/root/.prefect
+    ports:
+      # Prefect UI and API
+      - "4200:4200"
+    volumes:
+      # Persist Prefect Server data
+      - prefect-server-data:/root/.prefect
+    networks:
+      - prefect
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "prefect", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  prefect:
+    driver: bridge
+
+volumes:
+  prefect-server-data:

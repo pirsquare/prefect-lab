@@ -1,0 +1,121 @@
+# Prefect Deployments Configuration
+# Defines how flows are packaged, deployed, and scheduled across environments
+
+# Default configuration
+version: 3
+
+# Define deployment templates for different environments
+deployments:
+  # ========================================================================
+  # LOCAL DEVELOPMENT (Docker, Local Process, or Remote Worker)
+  # ========================================================================
+  - name: "hello-flow-local"
+    description: "Local development deployment (runs in Docker via Prefect Worker)"
+    
+    # Which flow to deploy
+    entrypoint: "flows/hello_flow.py:hello_flow"
+    
+    # Where code is pulled from (local or git repository)
+    # For local dev: code is already in container
+    # For cloud: set to your git repo
+    # code: null  # Use this for local dev
+    
+    # Work pool for local execution
+    work_pool:
+      name: "default"
+      work_queue_name: "default"
+    
+    # Schedule this deployment to run every 6 hours
+    schedule:
+      cron: "0 */6 * * *"
+      timezone: "UTC"
+    
+    # Parameters to pass to the flow
+    parameters:
+      data_source: "api.example.com"
+    
+    # Tags for organization
+    tags:
+      - "local"
+      - "dev"
+
+  # ========================================================================
+  # AWS ECS DEPLOYMENT (Fargate)
+  # ========================================================================
+  - name: "hello-flow-aws-ecs"
+    description: "AWS ECS Fargate worker deployment"
+    
+    entrypoint: "flows/hello_flow.py:hello_flow"
+    
+    # Point to git repository for cloud deployments
+    # code:
+    #   repository: "https://github.com/pirsquare/prefect-lab.git"
+    #   branch: "main"
+    #   path: "flows"
+    
+    # AWS work pool (created via `prefect work-pool create ...`)
+    work_pool:
+      name: "aws-ecs-pool"
+      work_queue_name: "default"
+    
+    # Schedule: every 12 hours during business hours (9 AM UTC)
+    schedule:
+      cron: "0 9,21 * * *"
+      timezone: "UTC"
+    
+    parameters:
+      data_source: "prod-api.aws.internal"
+    
+    tags:
+      - "aws"
+      - "production"
+
+  # ========================================================================
+  # GCP CLOUD RUN DEPLOYMENT
+  # ========================================================================
+  - name: "hello-flow-gcp-cloudrun"
+    description: "GCP Cloud Run worker deployment"
+    
+    entrypoint: "flows/hello_flow.py:hello_flow"
+    
+    # GCP work pool
+    work_pool:
+      name: "gcp-cloudrun-pool"
+      work_queue_name: "default"
+    
+    # Schedule: every 4 hours
+    schedule:
+      cron: "0 */4 * * *"
+      timezone: "UTC"
+    
+    parameters:
+      data_source: "api.gcp.internal"
+    
+    tags:
+      - "gcp"
+      - "production"
+
+  # ========================================================================
+  # AZURE CONTAINER APPS DEPLOYMENT
+  # ========================================================================
+  - name: "hello-flow-azure-aca"
+    description: "Azure Container Apps worker deployment"
+    
+    entrypoint: "flows/hello_flow.py:hello_flow"
+    
+    # Azure work pool
+    work_pool:
+      name: "azure-aca-pool"
+      work_queue_name: "default"
+    
+    # Schedule: daily at 2 AM UTC
+    schedule:
+      cron: "0 2 * * *"
+      timezone: "UTC"
+    
+    parameters:
+      data_source: "api.azure.internal"
+    
+    tags:
+      - "azure"
+      - "production"

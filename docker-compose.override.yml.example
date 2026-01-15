@@ -1,0 +1,23 @@
+# ============================================================================
+# Docker Compose Override for Windows Docker Socket Access
+# ============================================================================
+# 
+# Use this file if you need to run container flows (flows that spawn Docker containers).
+# On Windows (Docker Desktop), the Docker socket uses a named pipe instead of Unix socket.
+#
+# To use:
+#   1. Copy this file to docker-compose.override.yml
+#   2. Run: docker-compose up -d
+#   3. Prefect Worker can now spawn container flows
+#
+# On Linux/Mac, you would instead mount: /var/run/docker.sock:/var/run/docker.sock
+#
+# ============================================================================
+
+version: "3.9"
+
+services:
+  prefect-worker:
+    volumes:
+      # Windows (Docker Desktop): Named pipe for Docker API
+      - //./pipe/docker_engine://./pipe/docker_engine

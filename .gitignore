@@ -1,0 +1,208 @@
+# ============================================================================
+# Python
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================================================
+# Prefect
+# ============================================================================
+# Prefect home directory with work pool data, blocks, etc.
+.prefect/
+prefect/
+*.prefectignore
+
+# Prefect Cloud/Server credentials (keep local)
+# Already in .env, but double-check
+prefect-cloud-auth.json
+
+# ============================================================================
+# Environment & Secrets
+# ============================================================================
+.env
+.env.local
+.env.*.local
+.env.*.secret
+.env.production
+secrets.json
+*.key
+*.pem
+id_rsa
+id_rsa.pub
+
+# ============================================================================
+# Docker
+# ============================================================================
+# Docker build artifacts
+docker-compose.override.yml
+.dockerignore
+
+# Docker volumes and caches
+postgres_data/
+prefect-server-data/
+.docker/
+
+# ============================================================================
+# IDE & Editor
+# ============================================================================
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+.vim/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Emacs
+*~
+.\#*
+
+# Visual Studio
+.vs/
+
+# ============================================================================
+# OS
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================================================
+# Logs & Temporary Files
+# ============================================================================
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
+*.tmp
+
+# ============================================================================
+# Cloud Provider Credentials & Config Files
+# ============================================================================
+# AWS
+.aws/
+aws_credentials
+aws_config
+
+# GCP
+.gcp/
+gcp-key.json
+google-cloud-key.json
+service-account-key.json
+
+# Azure
+.azure/
+azure-credentials.json
+.env.azure
+
+# ============================================================================
+# Testing & Coverage
+# ============================================================================
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================================================
+# Dependency Management
+# ============================================================================
+Pipfile.lock
+poetry.lock
+uv.lock
+
+# ============================================================================
+# Build & Distribution
+# ============================================================================
+*.tar.gz
+*.zip
+*.whl
+site/
+htmlcov/
+
+# ============================================================================
+# Temporary Files
+# ============================================================================
+*.bak
+*.swp
+.#*
+*~
+
+# ============================================================================
+# Node / NPM (if any frontend components)
+# ============================================================================
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ============================================================================
+# MacOS
+# ============================================================================
+.AppleDouble
+.LSOverride
+._*
+
+# ============================================================================
+# Windows
+# ============================================================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

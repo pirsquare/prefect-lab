@@ -87,8 +87,8 @@ pip install prefect>=3.0.0
 # Create a local work pool (for development)
 prefect work-pool create --type docker default
 
-# Deploy the example flow
-prefect deploy --deployment hello-flow-local
+# Deploy using prefect.yaml configuration
+prefect deploy
 ```
 
 Expected output:
@@ -97,13 +97,24 @@ Created work pool 'default' (type: docker)
 Deployment 'hello-flow-local' deployed successfully
 ```
 
-### 4. Trigger a Flow Run
+This reads the deployment configuration from `deployments/prefect.yaml` and deploys all defined deployments to their respective work pools.
+
+### Trigger a Flow Run
 
 ```bash
 # Via CLI
 prefect deployment run hello-flow-local
 
 # Or via Prefect UI at http://localhost:4200
+```
+
+### Redeploy After Changes
+
+If you modify `flows/hello_flow.py` or `deployments/prefect.yaml`:
+
+```bash
+# Redeploy using updated configuration
+prefect deploy
 ```
 
 ### 5. View Logs & Results
@@ -269,8 +280,8 @@ terraform output -raw docker_build_push_commands | sh
 # Create work pool for ECS
 prefect work-pool create --type ecs aws-ecs-pool
 
-# Deploy hello-flow to AWS
-prefect deploy --deployment hello-flow-aws-ecs
+# Deploy using prefect.yaml
+prefect deploy
 ```
 
 8. **Verify deployment:**
@@ -383,7 +394,7 @@ terraform output -raw docker_build_push_commands | sh
 
 ```bash
 prefect work-pool create --type cloud-run gcp-cloudrun-pool
-prefect deploy --deployment hello-flow-gcp-cloudrun
+prefect deploy
 ```
 
 8. **Verify:**
@@ -467,7 +478,7 @@ az acr build --registry $(terraform output -raw acr_login_server | cut -d. -f1) 
 
 ```bash
 prefect work-pool create --type azure-container-instances azure-aca-pool
-prefect deploy --deployment hello-flow-azure-aca
+prefect deploy
 ```
 
 8. **Verify:**

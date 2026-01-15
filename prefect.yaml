@@ -1,0 +1,5 @@
+deployments:
+  - name: hello-flow-local
+    entrypoint: flows/hello_flow.py:hello_flow
+    work_pool:
+      name: default
